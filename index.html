@@ -31,21 +31,24 @@
     <canvas id="chart"></canvas>
   </div>
 
-  <!-- Tabletop.js -->
-  <script src="https://unpkg.com/tabletop@1.5.1/tabletop.js"></script>
-  <!-- Chart.js pour le graphique -->
+  <!-- ✅ Charger Tabletop après le chargement de la page -->
+  <script src="https://unpkg.com/tabletop@1.5.1/tabletop.js" onload="initTabletop()"></script>
+  <!-- ✅ Chart.js pour le graphique -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
-    const sheetURL = 'https://docs.google.com/spreadsheets/d/1aZek6YwzL94ideDVBjiJQF_-Mrtt5hVS3fCnXuGj_7E/pubhtml';
     let dataProd = [], dataRH = [], dataGlobal = [];
+
+    function initTabletop() {
+      console.log("Tabletop.js chargé et prêt !");
+    }
 
     function loadData() {
       const email = document.getElementById('email').value.trim().toLowerCase();
       if (!email) return alert("Veuillez entrer une adresse e-mail.");
 
       Tabletop.init({
-        key: sheetURL,
+        key: 'https://docs.google.com/spreadsheets/d/1aZek6YwzL94ideDVBjiJQF_-Mrtt5hVS3fCnXuGj_7E/pubhtml',
         wanted: ['Prod', 'RH', 'Global'],
         callback: function(data, tabletop) {
           dataProd = data.Prod.elements;
@@ -70,17 +73,13 @@
       const userData = dataProd.find(row => row.Email.toLowerCase() === email);
       if (!userData) return container.innerHTML += "<p>Aucune donnée trouvée.</p>";
 
-      const pts = parseInt(userData.Pts) || 0;
-      const ptsNet = parseInt(userData["Pts Net"]) || 0;
-      const prime = parseFloat(userData.Prime) || 0;
-      const delta = ptsNet - pts;
-
+      const delta = userData.Pts - userData["Pts Net"];  // Calcul du delta
       container.innerHTML += `
         <p><strong>${userData.Nom || userData.Email}</strong></p>
-        <p>Points : ${pts}</p>
-        <p>Points Net : ${ptsNet}</p>
-        <p>Prime : ${prime} DT</p>
-        <p><strong>Delta :</strong> ${delta} Pts</p>
+        <p>Points : ${userData.Pts}</p>
+        <p>Points Net : ${userData["Pts Net"]}</p>
+        <p>Prime : ${userData.Prime} DT</p>
+        <p>Delta : ${delta} points</p>
       `;
     }
 
@@ -92,9 +91,9 @@
 
       container.innerHTML += `
         <p><strong>${userData.Nom || userData.Email}</strong></p>
-        <p>Heures de travail : ${userData.Heures}</p>
+        <p>Heures : ${userData.Heures}</p>
         <p>Assiduité : ${userData.Assiduite}</p>
-        <p>Congés Payés : ${userData.CP}</p>
+        <p>Congés payés : ${userData.CP}</p>
         <p>TR : ${userData.TR}</p>
         <p>Prime RH : ${userData["Prime RH"]} DT</p>
         <p>Salaire : ${userData.Salaire} DT</p>
@@ -103,7 +102,7 @@
 
     function showGlobal() {
       const ctx = document.getElementById('chart').getContext('2d');
-      const labels = dataGlobal.map((_, index) => `Agent ${index + 1}`);
+      const labels = dataGlobal.map(row => "Agent");
       const points = dataGlobal.map(row => parseInt(row.Pts) || 0);
 
       new Chart(ctx, {
