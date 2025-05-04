@@ -2,43 +2,131 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard Prod</title>
+  <title>Dashboard Agent</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .hidden { display: none; }
+    button { margin: 5px; padding: 10px; }
+    .view { margin-top: 20px; }
+    canvas { max-width: 600px; }
+  </style>
 </head>
 <body>
-  <h1>Données Google Sheets - Vue Prod</h1>
-  <div id="contenu"></div>
 
-  <!-- ✅ Charger Tabletop d’abord -->
-  <script src="https://unpkg.com/tabletop@1.5.1/tabletop.js" onload="initTabletop()"></script>
+  <h2>Dashboard Agent</h2>
 
-  <!-- ✅ Ton script appelé SEULEMENT quand Tabletop est chargé -->
+  <label for="email">Entrer votre email :</label>
+  <input type="email" id="email" placeholder="ex: agent@email.com">
+  <button onclick="loadData()">Charger mes données</button>
+
+  <div>
+    <button onclick="showView('prod')">Vue Prod</button>
+    <button onclick="showView('rh')">Vue RH</button>
+    <button onclick="showView('global')">Vue Global</button>
+  </div>
+
+  <div id="prod" class="view hidden"></div>
+  <div id="rh" class="view hidden"></div>
+  <div id="global" class="view hidden">
+    <canvas id="chart"></canvas>
+  </div>
+
+  <!-- Tabletop.js -->
+  <script src="https://unpkg.com/tabletop@1.5.1/tabletop.js"></script>
+  <!-- Chart.js pour le graphique -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <script>
-    function initTabletop() {
-      Tabletop.init({
-        key: 'https://docs.google.com/spreadsheets/d/1aZek6YwzL94ideDVBjiJQF_-Mrtt5hVS3fCnXuGj_7E/pubhtml',
-        simpleSheet: true,
-        wanted: ["Prod"], // Nom exact de l'onglet
-        callback: function(data, tabletop) {
-          const contenu = document.getElementById('contenu');
-          if (!data || data.length === 0) {
-            contenu.innerHTML = "<p>Aucune donnée trouvée.</p>";
-            return;
-          }
+    const sheetURL = 'https://docs.google.com/spreadsheets/d/1aZek6YwzL94ideDVBjiJQF_-Mrtt5hVS3fCnXuGj_7E/pubhtml';
+    let dataProd = [], dataRH = [], dataGlobal = [];
 
-          data.forEach(row => {
-            const div = document.createElement('div');
-            div.innerHTML = `
-              <p><strong>${row.Nom || row.Email}</strong></p>
-              <p>Pts : ${row.Pts || 0}</p>
-              <p>Pts Net : ${row["Pts Net"] || 0}</p>
-              <p>Prime : ${row.Prime || 0} DT</p>
-              <hr>
-            `;
-            contenu.appendChild(div);
-          });
+    function loadData() {
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      if (!email) return alert("Veuillez entrer une adresse e-mail.");
+
+      Tabletop.init({
+        key: sheetURL,
+        wanted: ['Prod', 'RH', 'Global'],
+        callback: function(data, tabletop) {
+          dataProd = data.Prod.elements;
+          dataRH = data.RH.elements;
+          dataGlobal = data.Global.elements;
+
+          showProd(email);
+          showRH(email);
+          showGlobal();
+        }
+      });
+    }
+
+    function showView(id) {
+      document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function showProd(email) {
+      const container = document.getElementById('prod');
+      container.innerHTML = "<h3>Vue Production</h3>";
+      const userData = dataProd.find(row => row.Email.toLowerCase() === email);
+      if (!userData) return container.innerHTML += "<p>Aucune donnée trouvée.</p>";
+
+      const pts = parseInt(userData.Pts) || 0;
+      const ptsNet = parseInt(userData["Pts Net"]) || 0;
+      const prime = parseFloat(userData.Prime) || 0;
+      const delta = ptsNet - pts;
+
+      container.innerHTML += `
+        <p><strong>${userData.Nom || userData.Email}</strong></p>
+        <p>Points : ${pts}</p>
+        <p>Points Net : ${ptsNet}</p>
+        <p>Prime : ${prime} DT</p>
+        <p><strong>Delta :</strong> ${delta} Pts</p>
+      `;
+    }
+
+    function showRH(email) {
+      const container = document.getElementById('rh');
+      container.innerHTML = "<h3>Vue RH</h3>";
+      const userData = dataRH.find(row => row.Email.toLowerCase() === email);
+      if (!userData) return container.innerHTML += "<p>Aucune donnée trouvée.</p>";
+
+      container.innerHTML += `
+        <p><strong>${userData.Nom || userData.Email}</strong></p>
+        <p>Heures de travail : ${userData.Heures}</p>
+        <p>Assiduité : ${userData.Assiduite}</p>
+        <p>Congés Payés : ${userData.CP}</p>
+        <p>TR : ${userData.TR}</p>
+        <p>Prime RH : ${userData["Prime RH"]} DT</p>
+        <p>Salaire : ${userData.Salaire} DT</p>
+      `;
+    }
+
+    function showGlobal() {
+      const ctx = document.getElementById('chart').getContext('2d');
+      const labels = dataGlobal.map((_, index) => `Agent ${index + 1}`);
+      const points = dataGlobal.map(row => parseInt(row.Pts) || 0);
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Points',
+            data: points,
+            backgroundColor: 'rgba(54, 162, 235, 0.5)'
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
         }
       });
     }
   </script>
+
 </body>
 </html>
