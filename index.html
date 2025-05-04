@@ -2,16 +2,15 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Test Tabletop</title>
+  <title>Test Tabletop.js</title>
 </head>
 <body>
-  <h1>Données depuis Google Sheets</h1>
+  <h1>Données Google Sheets</h1>
   <div id="contenu"></div>
 
-  <!-- ✅ Charger Tabletop avant ton script -->
-  <script src="https://cdn.jsdelivr.net/npm/tabletop@1.6.0/tabletop.min.js"></script>
+  <!-- ✅ Charger depuis unpkg (fiable) -->
+  <script src="https://unpkg.com/tabletop@1.5.1/tabletop.js"></script>
 
-  <!-- ✅ Ton script après Tabletop -->
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       Tabletop.init({
@@ -21,7 +20,7 @@
           const contenu = document.getElementById('contenu');
           data.forEach(row => {
             const div = document.createElement('div');
-            div.textContent = `${row.Nom || row.Email} - ${row.Pts || '0'} pts`;
+            div.innerHTML = `<strong>${row.Nom || row.Email}</strong> — Pts: ${row.Pts || 0}`;
             contenu.appendChild(div);
           });
         }
