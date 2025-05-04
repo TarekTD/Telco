@@ -23,7 +23,7 @@
   </div>
 
   <!-- Vue Global avec graphique -->
-  <div id="global" class="view">
+  <div id="global" class="view hidden">
     <canvas id="chart"></canvas>
   </div>
 
@@ -57,8 +57,22 @@
 
     // Fonction pour initier Tabletop et charger les données
     function initTabletop() {
-      tabletopReady = true;
-      console.log("Tabletop.js chargé et prêt !");
+      Tabletop.init({
+        key: 'https://docs.google.com/spreadsheets/d/1aZek6YwzL94ideDVBjiJQF_-Mrtt5hVS3fCnXuGj_7E/pubhtml',
+        wanted: ['Prod', 'RH', 'Global'],
+        callback: function(data, tabletop) {
+          dataProd = data.Prod.elements;
+          dataRH = data.RH.elements;
+          dataGlobal = data.Global.elements;
+          
+          tabletopReady = true; // Indiquer que Tabletop a terminé
+          console.log("Tabletop.js chargé et prêt !");
+          showGlobal();  // Affiche la vue Global initialement
+        },
+        error: function(err) {
+          alert("Erreur lors du chargement des données: " + err);
+        }
+      });
     }
 
     // Fonction pour valider l'email et charger les données
@@ -69,11 +83,16 @@
         return;
       }
       currentEmail = email;
-      loadData(); // Charge les données une fois le mail validé
+
+      // Si Tabletop n'est pas prêt, on attend
+      if (!tabletopReady) {
+        alert("Les données ne sont pas encore disponibles. Veuillez patienter.");
+        return;
+      }
       showView('view-selection'); // Afficher les options des vues après validation du mail
     }
 
-    // Charger les données à partir de Google Sheets
+    // Charger les données à partir de Google Sheets si Tabletop est chargé
     function loadData() {
       if (!tabletopReady) {
         alert("Tabletop n'est pas encore chargé.");
@@ -88,9 +107,9 @@
           dataRH = data.RH.elements;
           dataGlobal = data.Global.elements;
           
-          showGlobal();  // Affiche la vue Global initialement
-          showRH();      // Affiche les informations RH après validation
-          showProd();    // Affiche les informations Prod après validation
+          showGlobal();  // Afficher le graphique des points
+          showRH();      // Afficher les informations RH après validation
+          showProd();    // Afficher les informations Prod après validation
         }
       });
     }
@@ -170,6 +189,9 @@
         <p>Delta : ${delta} points</p>
       `;
     }
+
+    // Charger Tabletop dès que le script est chargé
+    window.onload = initTabletop;
 
   </script>
 
