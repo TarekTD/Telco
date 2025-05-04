@@ -1,138 +1,131 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tableau de Bord Agent</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de bord</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 1rem;
-      background: #f9f9f9;
+      margin: 20px;
     }
     h1 {
       text-align: center;
     }
-    .section {
-      background: white;
-      padding: 1rem;
-      border-radius: 10px;
-      margin-bottom: 1rem;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    #message {
+      font-size: 1.2em;
+      margin-top: 20px;
+      text-align: center;
     }
-    input, button {
-      padding: 0.5rem;
-      margin-right: 0.5rem;
-      font-size: 1rem;
+    #globalChart {
+      width: 100%;
+      height: 400px;
     }
-    canvas {
-      max-width: 100%;
-    }
-    .label {
-      font-weight: bold;
+    .data-section {
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <h1>Tableau de Bord Agent</h1>
+  <h1>Tableau de bord de l'agent</h1>
 
-  <div class="section">
-    <input type="email" id="email" placeholder="Votre adresse email">
-    <button id="submit">Valider</button>
+  <div class="data-section">
+    <label for="email">Email de l'agent : </label>
+    <input type="email" id="email" placeholder="Entrez votre email" />
+    <button onclick="fetchData()">Afficher mes données</button>
   </div>
 
-  <div id="message" class="section"></div>
-  <div id="prod" class="section"></div>
-  <div id="rh" class="section"></div>
-  <div class="section">
-    <h2>Graphique Global</h2>
-    <canvas id="globalChart" height="200"></canvas>
+  <div id="message"></div>
+
+  <div class="data-section">
+    <h2>Mes Points et Prime</h2>
+    <p id="points"></p>
+    <p id="prime"></p>
   </div>
-    <!-- Script déplacé ici, juste avant la fermeture de </body> -->
+
+  <div class="data-section">
+    <h2>Mes Données RH</h2>
+    <p id="hours"></p>
+    <p id="salary"></p>
+  </div>
+
+  <div class="data-section">
+    <h2>Graphique des Points Globaux</h2>
+    <canvas id="globalChart"></canvas>
+  </div>
+
   <script>
-
-fetch("https://script.google.com/macros/s/AKfycbzm5ZGrZLCm8_-jrPJ9wpmNhIxIXvhTRa4y9nyjLz1SMMUumFSVUmufFX0yY1G6aLd1/exec?email=" + email, {
-  method: 'GET',
-  mode: 'no-cors', // Désactive la politique CORS
-})
-.then(response => response.json())
-.then(data => {
-  console.log(data);  // Affiche les données dans la console
-  // Gère les données ici
-})
-.catch(error => console.error('Erreur lors de la récupération des données:', error));
-
-  
-
-
-
-    function renderData(data) {
-      if (!data) return;
-
-      // Message
-      document.getElementById("message").innerHTML = `<h2>${data.message}</h2>`;
-
-      // Prod
-      if (data.prod) {
-        const prodHTML = `
-          <h3>Production</h3>
-          <p><span class="label">Nb Points :</span> ${data.prod.nb_pts}</p>
-          <p><span class="label">Nb Points Net :</span> ${data.prod.nb_pts_net}</p>
-          <p><span class="label">Prime :</span> ${data.prod.prime}</p>
-          <p><span class="label">Classement :</span> ${data.prod.classement}</p>
-        `;
-        document.getElementById("prod").innerHTML = prodHTML;
+    // Fonction pour récupérer les données depuis le Google Apps Script
+    function fetchData() {
+      var email = document.getElementById('email').value.trim();
+      if (!email) {
+        alert("Veuillez entrer un email.");
+        return;
       }
 
-      // RH
-      if (data.rh) {
-        const rhHTML = `
-          <h3>RH</h3>
-          <p><span class="label">Heures connexions :</span> ${data.rh.heures}</p>
-          <p><span class="label">Assiduité :</span> ${data.rh.assiduite}</p>
-          <p><span class="label">Congés payés :</span> ${data.rh.cp}</p>
-          <p><span class="label">Tickets restos :</span> ${data.rh.tr}</p>
-          <p><span class="label">Salaire :</span> ${data.rh.salaire}</p>
-        `;
-        document.getElementById("rh").innerHTML = rhHTML;
-      }
+      var url = 'https://script.google.com/macros/s/AKfycbzG30-w23nq2krYYl4dWbah3u02l91FjU7ThDs8giGJflumiPKnaq6WV6Z9TWGs94_i/exec?email=' + email;
 
-      // Global Chart
-      if (data.global) {
-        const labels = data.global.map((_, i) => "Agent " + (i + 1));
-        const values = data.global.map(item => item.nb_pts);
-        const ctx = document.getElementById("globalChart").getContext("2d");
-
-        new Chart(ctx, {
-          type: "bar",
-          data: {
-            labels: labels,
-            datasets: [{
-              label: "Nb Pts",
-              data: values,
-              backgroundColor: "#36a2eb"
-            }]
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: { beginAtZero: true }
-            }
-          }
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          console.log(data); // Affiche les données dans la console pour débogage
+          updateUI(data); // Mettre à jour l'interface utilisateur avec les données
+        })
+        .catch(error => {
+          console.error('Erreur lors du chargement des données :', error);
         });
+    }
+
+    // Fonction pour mettre à jour l'interface utilisateur avec les données récupérées
+    function updateUI(data) {
+      // Affichage du message
+      if (data.message) {
+        document.getElementById('message').textContent = data.message;
+      }
+
+      // Affichage des données produit
+      if (data.prod) {
+        document.getElementById('points').textContent = 'Points: ' + data.prod.nb_pts;
+        document.getElementById('prime').textContent = 'Prime: ' + data.prod.prime;
+      }
+
+      // Affichage des données RH
+      if (data.rh) {
+        document.getElementById('hours').textContent = 'Heures de connexion: ' + data.rh.heures;
+        document.getElementById('salary').textContent = 'Salaire: ' + data.rh.salaire;
+      }
+
+      // Affichage du graphique global
+      if (data.global && data.global.length > 0) {
+        drawGlobalChart(data.global);
       }
     }
 
-    // Initial fetch (global)
-    fetchData().then(renderData);
-
-    // Button event
-    document.getElementById("submit").addEventListener("click", async () => {
-      const email = document.getElementById("email").value.trim();
-      const data = await fetchData(email);
-      renderData(data);
-    });
+    // Fonction pour afficher le graphique des points globaux
+    function drawGlobalChart(globalData) {
+      var ctx = document.getElementById('globalChart').getContext('2d');
+      var chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: globalData.map(item => item.nb_pts), // Points comme étiquettes sur l'axe X
+          datasets: [{
+            label: 'Points par agent',
+            data: globalData.map(item => item.nb_pts),
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
   </script>
 </body>
 </html>
