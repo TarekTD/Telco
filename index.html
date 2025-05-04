@@ -57,6 +57,12 @@
 
     // Fonction pour initier Tabletop et charger les données
     function initTabletop() {
+      // Attendre que Tabletop.js soit totalement chargé avant de l'utiliser
+      if (typeof Tabletop === 'undefined') {
+        console.error("Tabletop.js n'est pas encore chargé.");
+        return;
+      }
+
       Tabletop.init({
         key: 'https://docs.google.com/spreadsheets/d/1aZek6YwzL94ideDVBjiJQF_-Mrtt5hVS3fCnXuGj_7E/pubhtml',
         wanted: ['Prod', 'RH', 'Global'],
@@ -67,7 +73,7 @@
           
           tabletopReady = true; // Indiquer que Tabletop a terminé
           console.log("Tabletop.js chargé et prêt !");
-          showGlobal();  // Affiche la vue Global initialement
+          showGlobal();  // Afficher la vue Global initialement
         },
         error: function(err) {
           alert("Erreur lors du chargement des données: " + err);
@@ -90,28 +96,6 @@
         return;
       }
       showView('view-selection'); // Afficher les options des vues après validation du mail
-    }
-
-    // Charger les données à partir de Google Sheets si Tabletop est chargé
-    function loadData() {
-      if (!tabletopReady) {
-        alert("Tabletop n'est pas encore chargé.");
-        return;
-      }
-
-      Tabletop.init({
-        key: 'https://docs.google.com/spreadsheets/d/1aZek6YwzL94ideDVBjiJQF_-Mrtt5hVS3fCnXuGj_7E/pubhtml',
-        wanted: ['Prod', 'RH', 'Global'],
-        callback: function(data, tabletop) {
-          dataProd = data.Prod.elements;
-          dataRH = data.RH.elements;
-          dataGlobal = data.Global.elements;
-          
-          showGlobal();  // Afficher le graphique des points
-          showRH();      // Afficher les informations RH après validation
-          showProd();    // Afficher les informations Prod après validation
-        }
-      });
     }
 
     // Afficher une vue spécifique
@@ -191,7 +175,9 @@
     }
 
     // Charger Tabletop dès que le script est chargé
-    window.onload = initTabletop;
+    window.onload = function() {
+      initTabletop();
+    };
 
   </script>
 
