@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TD Call Center - Résultats Agent</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -31,6 +32,9 @@
     .row {
       margin: 0.5rem 0;
     }
+    canvas {
+      max-width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -41,8 +45,14 @@
   <div id="message" class="section" style="display:none;"></div>
   <div id="prod" class="section" style="display:none;"></div>
   <div id="rh" class="section" style="display:none;"></div>
+  <div id="graph" class="section" style="display:none;">
+    <div class="title">Classement Anonyme (Nb Pts)</div>
+    <canvas id="barChart"></canvas>
+  </div>
 
   <script>
+    let chartInstance = null;
+
     async function loadData() {
       const email = document.getElementById("email").value.trim().toLowerCase();
       if (!email) return alert("Merci de saisir un email valide.");
@@ -53,9 +63,11 @@
         const res = await fetch(url);
         const data = await res.json();
 
+        // Afficher message
         document.getElementById("message").style.display = "block";
         document.getElementById("message").innerHTML = `<div class="title">Message</div><div>${data.message}</div>`;
 
+        // Afficher prod
         if (data.prod) {
           document.getElementById("prod").style.display = "block";
           document.getElementById("prod").innerHTML = `
@@ -67,6 +79,7 @@
           `;
         }
 
+        // Afficher RH
         if (data.rh) {
           document.getElementById("rh").style.display = "block";
           document.getElementById("rh").innerHTML = `
@@ -77,6 +90,38 @@
             <div class="row">TR : ${data.rh.tr}</div>
             <div class="row">Salaire : ${data.rh.salaire}</div>
           `;
+        }
+
+        // Graphique Global
+        if (data.global && data.global.length > 0) {
+          document.getElementById("graph").style.display = "block";
+          const ctx = document.getElementById("barChart").getContext("2d");
+
+          const labels = data.global.map((_, i) => `Agent ${i + 1}`);
+          const values = data.global.map(d => parseFloat(d.nb_pts));
+
+          if (chartInstance) chartInstance.destroy(); // Reset si déjà créé
+
+          chartInstance = new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: labels,
+              datasets: [{
+                label: "Nb Pts",
+                data: values,
+                backgroundColor: "#007bff",
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { display: false },
+              },
+              scales: {
+                y: { beginAtZero: true }
+              }
+            }
+          });
         }
 
       } catch (err) {
