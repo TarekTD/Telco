@@ -67,17 +67,26 @@
         document.getElementById("message").style.display = "block";
         document.getElementById("message").innerHTML = `<div class="title">Message</div><div>${data.message}</div>`;
 
-        // Afficher prod
-        if (data.prod) {
-          document.getElementById("prod").style.display = "block";
-          document.getElementById("prod").innerHTML = `
-            <div class="title">Production</div>
-            <div class="row">Nb Pts : ${data.prod.nb_pts}</div>
-            <div class="row">Nb Pts Net : ${data.prod.nb_pts_net}</div>
-            <div class="row">Prime : ${data.prod.prime}</div>
-            <div class="row">Classement : <strong>${data.prod.classement}</strong></div>
-          `;
-        }
+        // Afficher prodif (data.prod) {
+  // Calcul du classement anonyme
+  const pointsList = data.global
+    .map(d => parseFloat(d.nb_pts))
+    .filter(v => !isNaN(v))
+    .sort((a, b) => b - a);
+
+  const userPts = parseFloat(data.prod.nb_pts);
+  const userRank = pointsList.indexOf(userPts) + 1;
+
+  document.getElementById("prod").style.display = "block";
+  document.getElementById("prod").innerHTML = `
+    <div class="title">Production</div>
+    <div class="row">Nb Pts : ${data.prod.nb_pts}</div>
+    <div class="row">Nb Pts Net : ${data.prod.nb_pts_net}</div>
+    <div class="row">Prime : ${data.prod.prime}</div>
+    <div class="row">Classement : <strong>${data.prod.classement}</strong></div>
+    <div class="row">Rang anonyme : ${userRank} / ${pointsList.length}</div>
+  `;
+}
 
         // Afficher RH
         if (data.rh) {
