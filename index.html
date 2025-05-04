@@ -1,0 +1,66 @@
+<body>
+  <h1>Tableau de bord </h1>
+
+  <div class="container">
+    <div class="card" id="prodCard">
+      <h2>Production</h2>
+      <p id="prodDetails">Chargement...</p>
+    </div>
+    <div class="card" id="rhCard">
+      <h2>Ressources humaines</h2>
+      <p id="rhDetails">Chargement...</p>
+    </div>
+    <div class="card" id="globalCard">
+      <h2>Graphique Global</h2>
+      <canvas id="globalChart"></canvas>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    async function fetchData() {
+      const email = "user@example.com";
+      const url = `https://script.googleusercontent.com/macros/echo?...&email=${email}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      document.getElementById('prodDetails').innerHTML = `
+        Points: ${data.prod.nb_pts}<br>
+        Points Nets: ${data.prod.nb_pts_net}<br>
+        Prime: ${data.prod.prime}
+      `;
+      document.getElementById('rhDetails').innerHTML = `
+        Heures de connexion: ${data.rh.heures}<br>
+        Assiduité: ${data.rh.assiduite}<br>
+        Salaire: ${data.rh.salaire}
+      `;
+      const ctx = document.getElementById('globalChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.global.map(item => item.nb_pts),
+          datasets: [{
+            label: 'Points',
+            data: data.global.map(item => item.delta),
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+    fetchData();
+  </script>
+</body>
