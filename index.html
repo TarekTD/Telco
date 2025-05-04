@@ -1,190 +1,106 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TD Call Center - Résultats Agent</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 2rem;
-      background: #f9f9f9;
-      color: #333;
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  let chartInstance = null;
+
+  async function fetchData(email = "") {
+    const baseURL = "https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLheDF7qmltYPePJyU-a_c5NuV479jBixnUIGTjfrfxzS8SW0Ph6HOaBkpvmOwp2nyuP9y_JcBlZDns7PIwz5UPfJVCNQD6lJ9xjLBBJi09BjRG0hyQ3MhGduxflzHekKNZSkhWNhV1OmZIrU-bHn7-HYoJMmf4sUqqM_2MP0je79VDgoZ21CIAfQcDXSlPMdPwWMvEhPf_CbBZ7F2-Y1R0jui7LfwQnObtqb9cpIiD6hVb6ZlvEErw04gnc-SaEIIbMM8_kNpMm3Ol7xERrD_ItYxiXEw&lib=Mm4G-2oZZR9jOqSY09W6cBeaoJlzzZ8rm";
+    const url = email ? `${baseURL}&email=${encodeURIComponent(email)}` : baseURL;
+
+    try {
+      const res = await fetch(url);
+      return await res.json();
+    } catch (error) {
+      console.error("Erreur lors du chargement des données :", error);
+      return null;
     }
-    input, button {
-      padding: 0.5rem;
-      font-size: 1rem;
-    }
-    .section {
-      margin-top: 2rem;
-      background: white;
-      padding: 1rem;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .title {
-      font-size: 1.2rem;
-      font-weight: bold;
-      margin-bottom: 1rem;
-      color: #007bff;
-    }
-    .row {
-      margin: 0.5rem 0;
-    }
-    canvas {
-      max-width: 100%;
-    }
-  </style>
-</head>
-<body>
-  <h1>Résultats personnels</h1>
-  <input type="email" id="email" placeholder="Entrez votre email" required />
-  <button onclick="loadData()">Voir mes résultats</button>
-
-  <div id="message" class="section" style="display:none;"></div>
-  <div id="prod" class="section" style="display:none;"></div>
-  <div id="rh" class="section" style="display:none;"></div>
-  <div id="graph" class="section" style="display:none;">
-    <div class="title">Classement Anonyme (Nb Pts)</div>
-    <canvas id="barChart"></canvas>
-  </div>
-
-  <script>
-    let chartInstance = null;
-
-  
-function loadGlobalChart(data) {
-  if (!data.global || data.global.length === 0) return;
-
-  document.getElementById("graph").style.display = "block";
-  const ctx = document.getElementById("barChart").getContext("2d");
-
-  const labels = data.global.map((_, i) => `Agent ${i + 1}`);
-  const values = data.global.map(d => parseFloat(d.nb_pts));
-
-  if (chartInstance) chartInstance.destroy();
-
-  chartInstance = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: "Nb Pts",
-        data: values,
-        backgroundColor: "#007bff",
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-      },
-      scales: {
-        y: { beginAtZero: true }
-      }
-    }
-  });
-}
-
-    async function loadData() {
-      const email = document.getElementById("email").value.trim().toLowerCase();
-      if (!email) return alert("Merci de saisir un email valide.");
-
-      const url = `https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLheDF7qmltYPePJyU-a_c5NuV479jBixnUIGTjfrfxzS8SW0Ph6HOaBkpvmOwp2nyuP9y_JcBlZDns7PIwz5UPfJVCNQD6lJ9xjLBBJi09BjRG0hyQ3MhGduxflzHekKNZSkhWNhV1OmZIrU-bHn7-HYoJMmf4sUqqM_2MP0je79VDgoZ21CIAfQcDXSlPMdPwWMvEhPf_CbBZ7F2-Y1R0jui7LfwQnObtqb9cpIiD6hVb6ZlvEErw04gnc-SaEIIbMM8_kNpMm3Ol7xERrD_ItYxiXEw&lib=Mm4G-2oZZR9jOqSY09W6cBeaoJlzzZ8rm&email=${encodeURIComponent(email)}`;
-
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-
-        // Afficher message
-        document.getElementById("message").style.display = "block";
-        document.getElementById("message").innerHTML = `<div class="title">Message</div><div>${data.message}</div>`;
-
-        // Afficher prodif (data.prod) {
-  // Calcul du classement anonyme
-  const pointsList = data.global
-    .map(d => parseFloat(d.nb_pts))
-    .filter(v => !isNaN(v))
-    .sort((a, b) => b - a);
-
-  const userPts = parseFloat(data.prod.nb_pts);
-  const userRank = pointsList.indexOf(userPts) + 1;
-
-  document.getElementById("prod").style.display = "block";
-  document.getElementById("prod").innerHTML = `
-    <div class="title">Production</div>
-    <div class="row">Nb Pts : ${data.prod.nb_pts}</div>
-    <div class="row">Nb Pts Net : ${data.prod.nb_pts_net}</div>
-    <div class="row">Prime : ${data.prod.prime}</div>
-    <div class="row">Classement : <strong>${data.prod.classement}</strong></div>
-    <div class="row">Rang anonyme : ${userRank} / ${pointsList.length}</div>
-  `;
-}
-
-        // Afficher RH
-        if (data.rh) {
-          document.getElementById("rh").style.display = "block";
-          document.getElementById("rh").innerHTML = `
-            <div class="title">RH</div>
-            <div class="row">Heures : ${data.rh.heures}</div>
-            <div class="row">Assiduité : ${data.rh.assiduite}</div>
-            <div class="row">CP : ${data.rh.cp}</div>
-            <div class="row">TR : ${data.rh.tr}</div>
-            <div class="row">Salaire : ${data.rh.salaire}</div>
-          `;
-        }
-
-        // Graphique Global
-        if (data.global && data.global.length > 0) {
-          document.getElementById("graph").style.display = "block";
-          const ctx = document.getElementById("barChart").getContext("2d");
-
-          const labels = data.global.map((_, i) => `Agent ${i + 1}`);
-          const values = data.global.map(d => parseFloat(d.nb_pts));
-
-          if (chartInstance) chartInstance.destroy(); // Reset si déjà créé
-
-          chartInstance = new Chart(ctx, {
-            type: "bar",
-            data: {
-              labels: labels,
-              datasets: [{
-                label: "Nb Pts",
-                data: values,
-                backgroundColor: "#007bff",
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: {
-                legend: { display: false },
-              },
-              scales: {
-                y: { beginAtZero: true }
-              }
-            }
-          });
-        }
-
-      // Charger automatiquement le graphique global dès l'ouverture de la page
-window.onload = async () => {
-  const url = `https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLheDF7qmltYPePJyU-a_c5NuV479jBixnUIGTjfrfxzS8SW0Ph6HOaBkpvmOwp2nyuP9y_JcBlZDns7PIwz5UPfJVCNQD6lJ9xjLBBJi09BjRG0hyQ3MhGduxflzHekKNZSkhWNhV1OmZIrU-bHn7-HYoJMmf4sUqqM_2MP0je79VDgoZ21CIAfQcDXSlPMdPwWMvEhPf_CbBZ7F2-Y1R0jui7LfwQnObtqb9cpIiD6hVb6ZlvEErw04gnc-SaEIIbMM8_kNpMm3Ol7xERrD_ItYxiXEw&lib=Mm4G-2oZZR9jOqSY09W6cBeaoJlzzZ8rm`;
-
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    loadGlobalChart(data);
-  } catch (err) {
-    console.error("Erreur chargement graphique global :", err);
   }
-};
 
-      } catch (err) {
-        alert("Erreur lors du chargement des données.");
-        console.error(err);
+  function loadGlobalChart(data) {
+    if (!data.global || data.global.length === 0) return;
+
+    document.getElementById("graph").style.display = "block";
+    const ctx = document.getElementById("barChart").getContext("2d");
+
+    const labels = data.global.map((_, i) => `Agent ${i + 1}`);
+    const values = data.global.map(d => parseFloat(d.nb_pts));
+
+    if (chartInstance) chartInstance.destroy();
+
+    chartInstance = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Nb Pts",
+          data: values,
+          backgroundColor: "#007bff",
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+        },
+        scales: {
+          y: { beginAtZero: true }
+        }
       }
+    });
+  }
+
+  function displayData(data) {
+    if (data.message) {
+      document.getElementById("welcome").style.display = "block";
+      document.getElementById("welcome").innerText = data.message;
     }
-  </script>
-</body>
-</html>
+
+    if (data.prod) {
+      const pointsList = data.global
+        .map(d => parseFloat(d.nb_pts))
+        .filter(v => !isNaN(v))
+        .sort((a, b) => b - a);
+
+      const userPts = parseFloat(data.prod.nb_pts);
+      const userRank = pointsList.indexOf(userPts) + 1;
+
+      document.getElementById("prod").style.display = "block";
+      document.getElementById("prod").innerHTML = `
+        <div class="title">Production</div>
+        <div class="row">Nb Pts : ${data.prod.nb_pts}</div>
+        <div class="row">Nb Pts Net : ${data.prod.nb_pts_net}</div>
+        <div class="row">Prime : ${data.prod.prime}</div>
+        <div class="row">Classement : <strong>${data.prod.classement}</strong></div>
+        <div class="row">Rang anonyme : ${userRank} / ${pointsList.length}</div>
+      `;
+    }
+
+    if (data.rh) {
+      document.getElementById("rh").style.display = "block";
+      document.getElementById("rh").innerHTML = `
+        <div class="title">RH</div>
+        <div class="row">Heures de connexion : ${data.rh.heures}</div>
+        <div class="row">Assiduité : ${data.rh.assiduite}</div>
+        <div class="row">CP : ${data.rh.cp}</div>
+        <div class="row">TR : ${data.rh.tr}</div>
+        <div class="row">Salaire : ${data.rh.salaire}</div>
+      `;
+    }
+
+    // Toujours charger le graphique même sans e-mail
+    loadGlobalChart(data);
+  }
+
+  document.getElementById("submitBtn").addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    if (!email) return;
+
+    const data = await fetchData(email);
+    if (data) displayData(data);
+  });
+
+  // Charger le graphique global dès le chargement de la page
+  window.onload = async () => {
+    const data = await fetchData();
+    if (data) loadGlobalChart(data);
+  };
+</script>
