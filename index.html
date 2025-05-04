@@ -9,6 +9,7 @@
     button { margin: 5px; padding: 10px; }
     .view { margin-top: 20px; }
     canvas { max-width: 600px; }
+    .loading { font-size: 18px; color: #555; }
   </style>
 </head>
 <body>
@@ -20,6 +21,11 @@
     <label for="email">Entrer votre email :</label>
     <input type="email" id="email" placeholder="ex: agent@email.com">
     <button onclick="validateEmail()">Valider</button>
+  </div>
+
+  <!-- Message de chargement -->
+  <div id="loading" class="loading hidden">
+    Chargement des données, veuillez patienter...
   </div>
 
   <!-- Vue Global avec graphique -->
@@ -57,12 +63,9 @@
 
     // Fonction pour initier Tabletop et charger les données
     function initTabletop() {
-      // Attendre que Tabletop.js soit totalement chargé avant de l'utiliser
-      if (typeof Tabletop === 'undefined') {
-        console.error("Tabletop.js n'est pas encore chargé.");
-        return;
-      }
-
+      // Afficher le message de chargement
+      document.getElementById('loading').classList.remove('hidden');
+      
       Tabletop.init({
         key: 'https://docs.google.com/spreadsheets/d/1aZek6YwzL94ideDVBjiJQF_-Mrtt5hVS3fCnXuGj_7E/pubhtml',
         wanted: ['Prod', 'RH', 'Global'],
@@ -73,10 +76,15 @@
           
           tabletopReady = true; // Indiquer que Tabletop a terminé
           console.log("Tabletop.js chargé et prêt !");
+          
+          // Masquer le message de chargement
+          document.getElementById('loading').classList.add('hidden');
+          
           showGlobal();  // Afficher la vue Global initialement
         },
         error: function(err) {
           alert("Erreur lors du chargement des données: " + err);
+          document.getElementById('loading').classList.add('hidden');
         }
       });
     }
