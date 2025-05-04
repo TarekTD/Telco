@@ -2,66 +2,31 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard Agents - Vue Prod</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f8f8f8;
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    .agent {
-      background: #fff;
-      padding: 10px 15px;
-      margin: 10px auto;
-      max-width: 500px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .agent strong {
-      color: #007bff;
-    }
-  </style>
+  <title>Test Tabletop</title>
 </head>
 <body>
-
-  <h1>Résultats des Agents - Vue Production</h1>
+  <h1>Données depuis Google Sheets</h1>
   <div id="contenu"></div>
 
-  <!-- Tabletop.js -->
+  <!-- ✅ Charger Tabletop avant ton script -->
   <script src="https://cdn.jsdelivr.net/npm/tabletop@1.6.0/tabletop.min.js"></script>
+
+  <!-- ✅ Ton script après Tabletop -->
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       Tabletop.init({
         key: 'https://docs.google.com/spreadsheets/d/1aZek6YwzL94ideDVBjiJQF_-Mrtt5hVS3fCnXuGj_7E/pubhtml',
         simpleSheet: true,
-        wanted: ["Prod"], // Nom exact de l'onglet
-        callback: function(data, tabletop) {
+        callback: function(data) {
           const contenu = document.getElementById('contenu');
-
-          if (!data || data.length === 0) {
-            contenu.innerHTML = "<p>Aucune donnée disponible.</p>";
-            return;
-          }
-
           data.forEach(row => {
-            const agentDiv = document.createElement('div');
-            agentDiv.className = 'agent';
-            agentDiv.innerHTML = `
-              <p><strong>${row.Nom || row.Email}</strong></p>
-              <p>Points : ${row.Pts || 0}</p>
-              <p>Points Nets : ${row["Pts Net"] || 0}</p>
-              <p>Prime : ${row.Prime || 0} DT</p>
-            `;
-            contenu.appendChild(agentDiv);
+            const div = document.createElement('div');
+            div.textContent = `${row.Nom || row.Email} - ${row.Pts || '0'} pts`;
+            contenu.appendChild(div);
           });
         }
       });
     });
   </script>
-
 </body>
 </html>
