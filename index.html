@@ -2,30 +2,43 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Test Tabletop.js</title>
+  <title>Dashboard Prod</title>
 </head>
 <body>
-  <h1>Données Google Sheets</h1>
+  <h1>Données Google Sheets - Vue Prod</h1>
   <div id="contenu"></div>
 
-  <!-- ✅ Charger depuis unpkg (fiable) -->
-  <script src="https://unpkg.com/tabletop@1.5.1/tabletop.js"></script>
+  <!-- ✅ Charger Tabletop d’abord -->
+  <script src="https://unpkg.com/tabletop@1.5.1/tabletop.js" onload="initTabletop()"></script>
 
+  <!-- ✅ Ton script appelé SEULEMENT quand Tabletop est chargé -->
   <script>
-    window.addEventListener('DOMContentLoaded', () => {
+    function initTabletop() {
       Tabletop.init({
         key: 'https://docs.google.com/spreadsheets/d/1aZek6YwzL94ideDVBjiJQF_-Mrtt5hVS3fCnXuGj_7E/pubhtml',
         simpleSheet: true,
-        callback: function(data) {
+        wanted: ["Prod"], // Nom exact de l'onglet
+        callback: function(data, tabletop) {
           const contenu = document.getElementById('contenu');
+          if (!data || data.length === 0) {
+            contenu.innerHTML = "<p>Aucune donnée trouvée.</p>";
+            return;
+          }
+
           data.forEach(row => {
             const div = document.createElement('div');
-            div.innerHTML = `<strong>${row.Nom || row.Email}</strong> — Pts: ${row.Pts || 0}`;
+            div.innerHTML = `
+              <p><strong>${row.Nom || row.Email}</strong></p>
+              <p>Pts : ${row.Pts || 0}</p>
+              <p>Pts Net : ${row["Pts Net"] || 0}</p>
+              <p>Prime : ${row.Prime || 0} DT</p>
+              <hr>
+            `;
             contenu.appendChild(div);
           });
         }
       });
-    });
+    }
   </script>
 </body>
 </html>
