@@ -1,0 +1,31 @@
+name: Deploy Site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Cela déclenche le workflow à chaque fois qu'il y a un push sur la branche main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # Utilise une machine virtuelle Ubuntu pour exécuter les actions
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2  # Cette étape permet de récupérer votre code depuis GitHub
+
+      - name: Set up Node.js (si vous utilisez des outils comme npm ou webpack)
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'  # Spécifiez la version de Node.js que vous utilisez
+
+      - name: Build the site (si nécessaire)
+        run: |
+          # Par exemple, si vous utilisez npm pour créer votre site
+          npm install
+          npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}  # Utilise le token GitHub pour déployer
+          publish_dir: ./dist  # Dossier à publier sur GitHub Pages, modifiez si nécessaire
