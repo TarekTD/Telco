@@ -2,131 +2,66 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tableau de bord</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>Dashboard Agents - Vue Prod</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
+      padding: 20px;
+      background: #f8f8f8;
     }
     h1 {
       text-align: center;
+      color: #333;
     }
-    #message {
-      font-size: 1.2em;
-      margin-top: 20px;
-      text-align: center;
+    .agent {
+      background: #fff;
+      padding: 10px 15px;
+      margin: 10px auto;
+      max-width: 500px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    #globalChart {
-      width: 100%;
-      height: 400px;
-    }
-    .data-section {
-      margin-top: 20px;
+    .agent strong {
+      color: #007bff;
     }
   </style>
 </head>
 <body>
-  <h1>Tableau de bord de l'agent</h1>
 
-  <div class="data-section">
-    <label for="email">Email de l'agent : </label>
-    <input type="email" id="email" placeholder="Entrez votre email" />
-    <button onclick="fetchData()">Afficher mes données</button>
-  </div>
+  <h1>Résultats des Agents - Vue Production</h1>
+  <div id="contenu"></div>
 
-  <div id="message"></div>
-
-  <div class="data-section">
-    <h2>Prod</h2>
-    <p id="points"></p>
-    <p id="prime"></p>
-  </div>
-
-  <div class="data-section">
-    <h2>RH</h2>
-    <p id="hours"></p>
-    <p id="salary"></p>
-  </div>
-
-  <div class="data-section">
-    <h2>Graphique des Points Globaux</h2>
-    <canvas id="globalChart"></canvas>
-  </div>
-
-  <!-- Fonction JavaScript à inclure dans ton fichier HTML -->
+  <!-- Tabletop.js -->
+  <script src="https://cdn.jsdelivr.net/npm/tabletop@1.6.0/tabletop.min.js"></script>
   <script>
-    // Fonction pour récupérer les données depuis le Google Apps Script
-    function fetchData() {
-      var email = document.getElementById('email').value.trim();
-      if (!email) {
-        alert("Veuillez entrer un email.");
-        return;
-      }
+    window.addEventListener('DOMContentLoaded', () => {
+      Tabletop.init({
+        key: 'https://docs.google.com/spreadsheets/d/1aZek6YwzL94ideDVBjiJQF_-Mrtt5hVS3fCnXuGj_7E/pubhtml',
+        simpleSheet: true,
+        wanted: ["Prod"], // Nom exact de l'onglet
+        callback: function(data, tabletop) {
+          const contenu = document.getElementById('contenu');
 
-      var url = 'https://script.google.com/macros/s/AKfycbx4OATzyCRFxeoosA4kLFNeaqYJ_IGnmfLYPpbjxu5cStcJNRFioYPPms4rw86grZk/exec?email=' + email;
-
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          console.log(data); // Affiche les données dans la console pour débogage
-          updateUI(data); // Mettre à jour l'interface utilisateur avec les données
-        })
-        .catch(error => {
-          console.error('Erreur lors du chargement des données :', error);
-        });
-    }
-
-    // Fonction pour mettre à jour l'interface utilisateur avec les données récupérées
-    function updateUI(data) {
-      // Affichage du message
-      if (data.message) {
-        document.getElementById('message').textContent = data.message;
-      }
-
-      // Affichage des données produit
-      if (data.prod) {
-        document.getElementById('points').textContent = 'Points: ' + data.prod.nb_pts;
-        document.getElementById('prime').textContent = 'Prime: ' + data.prod.prime;
-      }
-
-      // Affichage des données RH
-      if (data.rh) {
-        document.getElementById('hours').textContent = 'Heures de connexion: ' + data.rh.heures;
-        document.getElementById('salary').textContent = 'Salaire: ' + data.rh.salaire;
-      }
-
-      // Affichage du graphique global
-      if (data.global && data.global.length > 0) {
-        drawGlobalChart(data.global);
-      }
-    }
-
-    // Fonction pour afficher le graphique des points globaux
-    function drawGlobalChart(globalData) {
-      var ctx = document.getElementById('globalChart').getContext('2d');
-      var chart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: globalData.map(item => item.nb_pts), // Points comme étiquettes sur l'axe X
-          datasets: [{
-            label: 'Points par agent',
-            data: globalData.map(item => item.nb_pts),
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          scales: {
-            y: {
-              beginAtZero: true
-            }
+          if (!data || data.length === 0) {
+            contenu.innerHTML = "<p>Aucune donnée disponible.</p>";
+            return;
           }
+
+          data.forEach(row => {
+            const agentDiv = document.createElement('div');
+            agentDiv.className = 'agent';
+            agentDiv.innerHTML = `
+              <p><strong>${row.Nom || row.Email}</strong></p>
+              <p>Points : ${row.Pts || 0}</p>
+              <p>Points Nets : ${row["Pts Net"] || 0}</p>
+              <p>Prime : ${row.Prime || 0} DT</p>
+            `;
+            contenu.appendChild(agentDiv);
+          });
         }
       });
-    }
+    });
   </script>
+
 </body>
 </html>
