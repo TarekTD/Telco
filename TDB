@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tableau de Bord - Paie M-1</title>
-  <style>
+  <style>AKfycbzm5ZGrZLCm8_-jrPJ9wpmNhIxIXvhTRa4y9nyjLz1SMMUumFSVUmufFX0yY1G6aLd1
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -170,7 +170,7 @@
     // Function to fetch data from your backend API
     async function fetchData() {
       const email = "example@domain.com";  // Replace with the actual email parameter
-      const url = `https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?email=${email}`;
+      const url = `https://script.google.com/macros/s/AKfycbzm5ZGrZLCm8_-jrPJ9wpmNhIxIXvhTRa4y9nyjLz1SMMUumFSVUmufFX0yY1G6aLd1/exec?email=${email}`;
       
       const response = await fetch(url);
       const data = await response.json();
