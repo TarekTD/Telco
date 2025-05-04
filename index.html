@@ -32,20 +32,30 @@
   </div>
 
   <!-- ✅ Charger Tabletop après le chargement de la page -->
-  <script src="https://unpkg.com/tabletop@1.5.1/tabletop.js" onload="initTabletop()"></script>
+  <script src="https://unpkg.com/tabletop@1.5.1/tabletop.js"></script>
   <!-- ✅ Chart.js pour le graphique -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
     let dataProd = [], dataRH = [], dataGlobal = [];
+    let tabletopReady = false;
 
+    // Fonction pour initialiser Tabletop lorsque le script est chargé
     function initTabletop() {
+      tabletopReady = true;
       console.log("Tabletop.js chargé et prêt !");
     }
 
+    // Charger les données
     function loadData() {
       const email = document.getElementById('email').value.trim().toLowerCase();
       if (!email) return alert("Veuillez entrer une adresse e-mail.");
+
+      // Vérifie si Tabletop est prêt avant de continuer
+      if (!tabletopReady) {
+        alert("Tabletop n'est pas encore chargé.");
+        return;
+      }
 
       Tabletop.init({
         key: 'https://docs.google.com/spreadsheets/d/1aZek6YwzL94ideDVBjiJQF_-Mrtt5hVS3fCnXuGj_7E/pubhtml',
@@ -62,11 +72,13 @@
       });
     }
 
+    // Fonction pour afficher les vues
     function showView(id) {
       document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
       document.getElementById(id).classList.remove('hidden');
     }
 
+    // Vue Production
     function showProd(email) {
       const container = document.getElementById('prod');
       container.innerHTML = "<h3>Vue Production</h3>";
@@ -83,6 +95,7 @@
       `;
     }
 
+    // Vue RH
     function showRH(email) {
       const container = document.getElementById('rh');
       container.innerHTML = "<h3>Vue RH</h3>";
@@ -100,6 +113,7 @@
       `;
     }
 
+    // Vue Global
     function showGlobal() {
       const ctx = document.getElementById('chart').getContext('2d');
       const labels = dataGlobal.map(row => "Agent");
