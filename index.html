@@ -53,6 +53,40 @@
   <script>
     let chartInstance = null;
 
+  
+function loadGlobalChart(data) {
+  if (!data.global || data.global.length === 0) return;
+
+  document.getElementById("graph").style.display = "block";
+  const ctx = document.getElementById("barChart").getContext("2d");
+
+  const labels = data.global.map((_, i) => `Agent ${i + 1}`);
+  const values = data.global.map(d => parseFloat(d.nb_pts));
+
+  if (chartInstance) chartInstance.destroy();
+
+  chartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Nb Pts",
+        data: values,
+        backgroundColor: "#007bff",
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+
     async function loadData() {
       const email = document.getElementById("email").value.trim().toLowerCase();
       if (!email) return alert("Merci de saisir un email valide.");
@@ -132,6 +166,19 @@
             }
           });
         }
+
+      // Charger automatiquement le graphique global dès l'ouverture de la page
+window.onload = async () => {
+  const url = `https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLheDF7qmltYPePJyU-a_c5NuV479jBixnUIGTjfrfxzS8SW0Ph6HOaBkpvmOwp2nyuP9y_JcBlZDns7PIwz5UPfJVCNQD6lJ9xjLBBJi09BjRG0hyQ3MhGduxflzHekKNZSkhWNhV1OmZIrU-bHn7-HYoJMmf4sUqqM_2MP0je79VDgoZ21CIAfQcDXSlPMdPwWMvEhPf_CbBZ7F2-Y1R0jui7LfwQnObtqb9cpIiD6hVb6ZlvEErw04gnc-SaEIIbMM8_kNpMm3Ol7xERrD_ItYxiXEw&lib=Mm4G-2oZZR9jOqSY09W6cBeaoJlzzZ8rm`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    loadGlobalChart(data);
+  } catch (err) {
+    console.error("Erreur chargement graphique global :", err);
+  }
+};
 
       } catch (err) {
         alert("Erreur lors du chargement des données.");
