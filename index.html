@@ -15,43 +15,66 @@
 
   <h2>Dashboard Agent</h2>
 
-  <label for="email">Entrer votre email :</label>
-  <input type="email" id="email" placeholder="ex: agent@email.com">
-  <button onclick="loadData()">Charger mes données</button>
-
-  <div>
-    <button onclick="showView('prod')">Vue Prod</button>
-    <button onclick="showView('rh')">Vue RH</button>
-    <button onclick="showView('global')">Vue Global</button>
+  <!-- Champ email pour validation -->
+  <div id="email-container">
+    <label for="email">Entrer votre email :</label>
+    <input type="email" id="email" placeholder="ex: agent@email.com">
+    <button onclick="validateEmail()">Valider</button>
   </div>
 
-  <div id="prod" class="view hidden"></div>
-  <div id="rh" class="view hidden"></div>
-  <div id="global" class="view hidden">
+  <!-- Vue Global avec graphique -->
+  <div id="global" class="view">
     <canvas id="chart"></canvas>
   </div>
 
-  <!-- ✅ Charger Tabletop après le chargement de la page -->
+  <!-- Choix de la vue après validation du mail -->
+  <div id="view-selection" class="view hidden">
+    <button onclick="showView('prod')">Vue Prod</button>
+    <button onclick="showView('rh')">Vue RH</button>
+  </div>
+
+  <!-- Vue RH -->
+  <div id="rh" class="view hidden">
+    <button onclick="showView('global')">Retour Global</button>
+    <div id="rh-content"></div>
+  </div>
+
+  <!-- Vue Prod -->
+  <div id="prod" class="view hidden">
+    <button onclick="showView('global')">Retour Global</button>
+    <div id="prod-content"></div>
+  </div>
+
+  <!-- Tabletop.js -->
   <script src="https://unpkg.com/tabletop@1.5.1/tabletop.js"></script>
-  <!-- ✅ Chart.js pour le graphique -->
+  <!-- Chart.js pour le graphique -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
     let dataProd = [], dataRH = [], dataGlobal = [];
     let tabletopReady = false;
+    let currentEmail = "";
 
-    // Fonction pour initialiser Tabletop lorsque le script est chargé
+    // Fonction pour initier Tabletop et charger les données
     function initTabletop() {
       tabletopReady = true;
       console.log("Tabletop.js chargé et prêt !");
     }
 
-    // Charger les données
-    function loadData() {
+    // Fonction pour valider l'email et charger les données
+    function validateEmail() {
       const email = document.getElementById('email').value.trim().toLowerCase();
-      if (!email) return alert("Veuillez entrer une adresse e-mail.");
+      if (!email) {
+        alert("Veuillez entrer une adresse e-mail.");
+        return;
+      }
+      currentEmail = email;
+      loadData(); // Charge les données une fois le mail validé
+      showView('view-selection'); // Afficher les options des vues après validation du mail
+    }
 
-      // Vérifie si Tabletop est prêt avant de continuer
+    // Charger les données à partir de Google Sheets
+    function loadData() {
       if (!tabletopReady) {
         alert("Tabletop n'est pas encore chargé.");
         return;
@@ -64,56 +87,21 @@
           dataProd = data.Prod.elements;
           dataRH = data.RH.elements;
           dataGlobal = data.Global.elements;
-
-          showProd(email);
-          showRH(email);
-          showGlobal();
+          
+          showGlobal();  // Affiche la vue Global initialement
+          showRH();      // Affiche les informations RH après validation
+          showProd();    // Affiche les informations Prod après validation
         }
       });
     }
 
-    // Fonction pour afficher les vues
-    function showView(id) {
+    // Afficher une vue spécifique
+    function showView(view) {
       document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
-      document.getElementById(id).classList.remove('hidden');
+      document.getElementById(view).classList.remove('hidden');
     }
 
-    // Vue Production
-    function showProd(email) {
-      const container = document.getElementById('prod');
-      container.innerHTML = "<h3>Vue Production</h3>";
-      const userData = dataProd.find(row => row.Email.toLowerCase() === email);
-      if (!userData) return container.innerHTML += "<p>Aucune donnée trouvée.</p>";
-
-      const delta = userData.Pts - userData["Pts Net"];  // Calcul du delta
-      container.innerHTML += `
-        <p><strong>${userData.Nom || userData.Email}</strong></p>
-        <p>Points : ${userData.Pts}</p>
-        <p>Points Net : ${userData["Pts Net"]}</p>
-        <p>Prime : ${userData.Prime} DT</p>
-        <p>Delta : ${delta} points</p>
-      `;
-    }
-
-    // Vue RH
-    function showRH(email) {
-      const container = document.getElementById('rh');
-      container.innerHTML = "<h3>Vue RH</h3>";
-      const userData = dataRH.find(row => row.Email.toLowerCase() === email);
-      if (!userData) return container.innerHTML += "<p>Aucune donnée trouvée.</p>";
-
-      container.innerHTML += `
-        <p><strong>${userData.Nom || userData.Email}</strong></p>
-        <p>Heures : ${userData.Heures}</p>
-        <p>Assiduité : ${userData.Assiduite}</p>
-        <p>Congés payés : ${userData.CP}</p>
-        <p>TR : ${userData.TR}</p>
-        <p>Prime RH : ${userData["Prime RH"]} DT</p>
-        <p>Salaire : ${userData.Salaire} DT</p>
-      `;
-    }
-
-    // Vue Global
+    // Afficher la vue Global avec graphique
     function showGlobal() {
       const ctx = document.getElementById('chart').getContext('2d');
       const labels = dataGlobal.map(row => "Agent");
@@ -139,6 +127,50 @@
         }
       });
     }
+
+    // Afficher la vue RH pour l'email donné
+    function showRH() {
+      const container = document.getElementById('rh-content');
+      container.innerHTML = "<h3>Vue RH</h3>";
+
+      const userData = dataRH.find(row => row.Email.toLowerCase() === currentEmail);
+      if (!userData) {
+        container.innerHTML += "<p>Aucune donnée trouvée.</p>";
+        return;
+      }
+
+      container.innerHTML += `
+        <p><strong>${userData.Nom || userData.Email}</strong></p>
+        <p>Heures : ${userData.Heures}</p>
+        <p>Assiduité : ${userData.Assiduite}</p>
+        <p>Congés payés : ${userData.CP}</p>
+        <p>TR : ${userData.TR}</p>
+        <p>Prime RH : ${userData["Prime RH"]} DT</p>
+        <p>Salaire : ${userData.Salaire} DT</p>
+      `;
+    }
+
+    // Afficher la vue Prod pour l'email donné
+    function showProd() {
+      const container = document.getElementById('prod-content');
+      container.innerHTML = "<h3>Vue Prod</h3>";
+
+      const userData = dataProd.find(row => row.Email.toLowerCase() === currentEmail);
+      if (!userData) {
+        container.innerHTML += "<p>Aucune donnée trouvée.</p>";
+        return;
+      }
+
+      const delta = userData.Pts - userData["Pts Net"];  // Calcul du delta
+      container.innerHTML += `
+        <p><strong>${userData.Nom || userData.Email}</strong></p>
+        <p>Points : ${userData.Pts}</p>
+        <p>Points Net : ${userData["Pts Net"]}</p>
+        <p>Prime : ${userData.Prime} DT</p>
+        <p>Delta : ${delta} points</p>
+      `;
+    }
+
   </script>
 
 </body>
