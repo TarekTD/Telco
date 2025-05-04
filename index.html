@@ -1,66 +1,89 @@
-<body>
-  <h1>Tableau de bord </h1>
-
-  <div class="container">
-    <div class="card" id="prodCard">
-      <h2>Production</h2>
-      <p id="prodDetails">Chargement...</p>
-    </div>
-    <div class="card" id="rhCard">
-      <h2>Ressources humaines</h2>
-      <p id="rhDetails">Chargement...</p>
-    </div>
-    <div class="card" id="globalCard">
-      <h2>Graphique Global</h2>
-      <canvas id="globalChart"></canvas>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    async function fetchData() {
-      const email = "user@example.com";
-      const url = `https://script.googleusercontent.com/macros/echo?...&email=${email}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      document.getElementById('prodDetails').innerHTML = `
-        Points: ${data.prod.nb_pts}<br>
-        Points Nets: ${data.prod.nb_pts_net}<br>
-        Prime: ${data.prod.prime}
-      `;
-      document.getElementById('rhDetails').innerHTML = `
-        Heures de connexion: ${data.rh.heures}<br>
-        Assiduité: ${data.rh.assiduite}<br>
-        Salaire: ${data.rh.salaire}
-      `;
-      const ctx = document.getElementById('globalChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: data.global.map(item => item.nb_pts),
-          datasets: [{
-            label: 'Points',
-            data: data.global.map(item => item.delta),
-            backgroundColor: 'rgba(54, 162, 235, 0.5)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: 'top'
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          }
-        }
-      });
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TD Call Center - Résultats Agent</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #f9f9f9;
+      color: #333;
     }
-    fetchData();
+    input, button {
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    .section {
+      margin-top: 2rem;
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      color: #007bff;
+    }
+    .row {
+      margin: 0.5rem 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Résultats personnels</h1>
+  <input type="email" id="email" placeholder="Entrez votre email" required />
+  <button onclick="loadData()">Voir mes résultats</button>
+
+  <div id="message" class="section" style="display:none;"></div>
+  <div id="prod" class="section" style="display:none;"></div>
+  <div id="rh" class="section" style="display:none;"></div>
+
+  <script>
+    async function loadData() {
+      const email = document.getElementById("email").value.trim().toLowerCase();
+      if (!email) return alert("Merci de saisir un email valide.");
+
+      const url = `https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLheDF7qmltYPePJyU-a_c5NuV479jBixnUIGTjfrfxzS8SW0Ph6HOaBkpvmOwp2nyuP9y_JcBlZDns7PIwz5UPfJVCNQD6lJ9xjLBBJi09BjRG0hyQ3MhGduxflzHekKNZSkhWNhV1OmZIrU-bHn7-HYoJMmf4sUqqM_2MP0je79VDgoZ21CIAfQcDXSlPMdPwWMvEhPf_CbBZ7F2-Y1R0jui7LfwQnObtqb9cpIiD6hVb6ZlvEErw04gnc-SaEIIbMM8_kNpMm3Ol7xERrD_ItYxiXEw&lib=Mm4G-2oZZR9jOqSY09W6cBeaoJlzzZ8rm&email=${encodeURIComponent(email)}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        document.getElementById("message").style.display = "block";
+        document.getElementById("message").innerHTML = `<div class="title">Message</div><div>${data.message}</div>`;
+
+        if (data.prod) {
+          document.getElementById("prod").style.display = "block";
+          document.getElementById("prod").innerHTML = `
+            <div class="title">Production</div>
+            <div class="row">Nb Pts : ${data.prod.nb_pts}</div>
+            <div class="row">Nb Pts Net : ${data.prod.nb_pts_net}</div>
+            <div class="row">Prime : ${data.prod.prime}</div>
+            <div class="row">Classement : <strong>${data.prod.classement}</strong></div>
+          `;
+        }
+
+        if (data.rh) {
+          document.getElementById("rh").style.display = "block";
+          document.getElementById("rh").innerHTML = `
+            <div class="title">RH</div>
+            <div class="row">Heures : ${data.rh.heures}</div>
+            <div class="row">Assiduité : ${data.rh.assiduite}</div>
+            <div class="row">CP : ${data.rh.cp}</div>
+            <div class="row">TR : ${data.rh.tr}</div>
+            <div class="row">Salaire : ${data.rh.salaire}</div>
+          `;
+        }
+
+      } catch (err) {
+        alert("Erreur lors du chargement des données.");
+        console.error(err);
+      }
+    }
   </script>
 </body>
+</html>
