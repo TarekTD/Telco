@@ -49,21 +49,23 @@
     <h2>Graphique Global</h2>
     <canvas id="globalChart" height="200"></canvas>
   </div>
-
-  <!-- Script déplacé ici, juste avant la fermeture de </body> -->
+    <!-- Script déplacé ici, juste avant la fermeture de </body> -->
   <script>
-    const API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLheDF7qmltYPePJyU-a_c5NuV479jBixnUIGTjfrfxzS8SW0Ph6HOaBkpvmOwp2nyuP9y_JcBlZDns7PIwz5UPfJVCNQD6lJ9xjLBBJi09BjRG0hyQ3MhGduxflzHekKNZSkhWNhV1OmZIrU-bHn7-HYoJMmf4sUqqM_2MP0je79VDgoZ21CIAfQcDXSlPMdPwWMvEhPf_CbBZ7F2-Y1R0jui7LfwQnObtqb9cpIiD6hVb6ZlvEErw04gnc-SaEIIbMM8_kNpMm3Ol7xERrD_ItYxiXEw&lib=Mm4G-2oZZR9jOqSY09W6cBeaoJlzzZ8rm";
 
-    async function fetchData(email = "") {
-      const url = email ? `${API_URL}&email=${encodeURIComponent(email)}` : API_URL;
-      try {
-        const res = await fetch(url);
-        return await res.json();
-      } catch (error) {
-        console.error("Erreur lors du chargement :", error);
-        return null;
-      }
-    }
+fetch("https://script.google.com/macros/s/AKfycbzm5ZGrZLCm8_-jrPJ9wpmNhIxIXvhTRa4y9nyjLz1SMMUumFSVUmufFX0yY1G6aLd1/exec?email=" + email, {
+  method: 'GET',
+  mode: 'no-cors', // Désactive la politique CORS
+})
+.then(response => response.json())
+.then(data => {
+  console.log(data);  // Affiche les données dans la console
+  // Gère les données ici
+})
+.catch(error => console.error('Erreur lors de la récupération des données:', error));
+
+  
+
+
 
     function renderData(data) {
       if (!data) return;
