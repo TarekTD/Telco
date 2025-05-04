@@ -1,105 +1,135 @@
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  let chartInstance = null;
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tableau de Bord Agent</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 1rem;
+      background: #f9f9f9;
+    }
+    h1 {
+      text-align: center;
+    }
+    .section {
+      background: white;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      padding: 0.5rem;
+      margin-right: 0.5rem;
+      font-size: 1rem;
+    }
+    canvas {
+      max-width: 100%;
+    }
+    .label {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tableau de Bord Agent</h1>
 
-async function fetchData(email = "") {
-  const baseURL = "https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLheDF7qmltYPePJyU-a_c5NuV479jBixnUIGTjfrfxzS8SW0Ph6HOaBkpvmOwp2nyuP9y_JcBlZDns7PIwz5UPfJVCNQD6lJ9xjLBBJi09BjRG0hyQ3MhGduxflzHekKNZSkhWNhV1OmZIrU-bHn7-HYoJMmf4sUqqM_2MP0je79VDgoZ21CIAfQcDXSlPMdPwWMvEhPf_CbBZ7F2-Y1R0jui7LfwQnObtqb9cpIiD6hVb6ZlvEErw04gnc-SaEIIbMM8_kNpMm3Ol7xERrD_ItYxiXEw&lib=Mm4G-2oZZR9jOqSY09W6cBeaoJlzzZ8rm";
-  const url = email ? `${baseURL}&email=${encodeURIComponent(email)}` : baseURL;
+  <div class="section">
+    <input type="email" id="email" placeholder="Votre adresse email">
+    <button id="submit">Valider</button>
+  </div>
 
-  try {
-    const res = await fetch(url);
-    return await res.json();
-  } catch (error) {
-    console.error("Erreur lors du chargement des données :", error);
-    return null;
-  }
-}
-  function loadGlobalChart(data) {
-    if (!data.global || data.global.length === 0) return;
+  <div id="message" class="section"></div>
+  <div id="prod" class="section"></div>
+  <div id="rh" class="section"></div>
+  <div class="section">
+    <h2>Graphique Global</h2>
+    <canvas id="globalChart" height="200"></canvas>
+  </div>
 
-    document.getElementById("graph").style.display = "block";
-    const ctx = document.getElementById("barChart").getContext("2d");
+  <script>
+    const API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLheDF7qmltYPePJyU-a_c5NuV479jBixnUIGTjfrfxzS8SW0Ph6HOaBkpvmOwp2nyuP9y_JcBlZDns7PIwz5UPfJVCNQD6lJ9xjLBBJi09BjRG0hyQ3MhGduxflzHekKNZSkhWNhV1OmZIrU-bHn7-HYoJMmf4sUqqM_2MP0je79VDgoZ21CIAfQcDXSlPMdPwWMvEhPf_CbBZ7F2-Y1R0jui7LfwQnObtqb9cpIiD6hVb6ZlvEErw04gnc-SaEIIbMM8_kNpMm3Ol7xERrD_ItYxiXEw&lib=Mm4G-2oZZR9jOqSY09W6cBeaoJlzzZ8rm";
 
-    const labels = data.global.map((_, i) => `Agent ${i + 1}`);
-    const values = data.global.map(d => parseFloat(d.nb_pts));
-
-    if (chartInstance) chartInstance.destroy();
-
-    chartInstance = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: labels,
-        datasets: [{
-          label: "Nb Pts",
-          data: values,
-          backgroundColor: "#007bff",
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-        },
-        scales: {
-          y: { beginAtZero: true }
-        }
+    async function fetchData(email = "") {
+      const url = email ? `${API_URL}&email=${encodeURIComponent(email)}` : API_URL;
+      try {
+        const res = await fetch(url);
+        return await res.json();
+      } catch (error) {
+        console.error("Erreur lors du chargement :", error);
+        return null;
       }
+    }
+
+    function renderData(data) {
+      if (!data) return;
+
+      // Message
+      document.getElementById("message").innerHTML = `<h2>${data.message}</h2>`;
+
+      // Prod
+      if (data.prod) {
+        const prodHTML = `
+          <h3>Production</h3>
+          <p><span class="label">Nb Points :</span> ${data.prod.nb_pts}</p>
+          <p><span class="label">Nb Points Net :</span> ${data.prod.nb_pts_net}</p>
+          <p><span class="label">Prime :</span> ${data.prod.prime}</p>
+          <p><span class="label">Classement :</span> ${data.prod.classement}</p>
+        `;
+        document.getElementById("prod").innerHTML = prodHTML;
+      }
+
+      // RH
+      if (data.rh) {
+        const rhHTML = `
+          <h3>RH</h3>
+          <p><span class="label">Heures connexions :</span> ${data.rh.heures}</p>
+          <p><span class="label">Assiduité :</span> ${data.rh.assiduite}</p>
+          <p><span class="label">Congés payés :</span> ${data.rh.cp}</p>
+          <p><span class="label">Tickets restos :</span> ${data.rh.tr}</p>
+          <p><span class="label">Salaire :</span> ${data.rh.salaire}</p>
+        `;
+        document.getElementById("rh").innerHTML = rhHTML;
+      }
+
+      // Global Chart
+      if (data.global) {
+        const labels = data.global.map((_, i) => "Agent " + (i + 1));
+        const values = data.global.map(item => item.nb_pts);
+        const ctx = document.getElementById("globalChart").getContext("2d");
+
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: "Nb Pts",
+              data: values,
+              backgroundColor: "#36a2eb"
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: { beginAtZero: true }
+            }
+          }
+        });
+      }
+    }
+
+    // Initial fetch (global)
+    fetchData().then(renderData);
+
+    // Button event
+    document.getElementById("submit").addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      const data = await fetchData(email);
+      renderData(data);
     });
-  }
-
-  function displayData(data) {
-    if (data.message) {
-      document.getElementById("welcome").style.display = "block";
-      document.getElementById("welcome").innerText = data.message;
-    }
-
-    if (data.prod) {
-      const pointsList = data.global
-        .map(d => parseFloat(d.nb_pts))
-        .filter(v => !isNaN(v))
-        .sort((a, b) => b - a);
-
-      const userPts = parseFloat(data.prod.nb_pts);
-      const userRank = pointsList.indexOf(userPts) + 1;
-
-      document.getElementById("prod").style.display = "block";
-      document.getElementById("prod").innerHTML = `
-        <div class="title">Production</div>
-        <div class="row">Nb Pts : ${data.prod.nb_pts}</div>
-        <div class="row">Nb Pts Net : ${data.prod.nb_pts_net}</div>
-        <div class="row">Prime : ${data.prod.prime}</div>
-        <div class="row">Classement : <strong>${data.prod.classement}</strong></div>
-        <div class="row">Rang anonyme : ${userRank} / ${pointsList.length}</div>
-      `;
-    }
-
-    if (data.rh) {
-      document.getElementById("rh").style.display = "block";
-      document.getElementById("rh").innerHTML = `
-        <div class="title">RH</div>
-        <div class="row">Heures de connexion : ${data.rh.heures}</div>
-        <div class="row">Assiduité : ${data.rh.assiduite}</div>
-        <div class="row">CP : ${data.rh.cp}</div>
-        <div class="row">TR : ${data.rh.tr}</div>
-        <div class="row">Salaire : ${data.rh.salaire}</div>
-      `;
-    }
-
-    // Toujours charger le graphique même sans e-mail
-    loadGlobalChart(data);
-  }
-
-  document.getElementById("submitBtn").addEventListener("click", async () => {
-    const email = document.getElementById("email").value.trim().toLowerCase();
-    if (!email) return;
-
-    const data = await fetchData(email);
-    if (data) displayData(data);
-  });
-
-  // Charger le graphique global dès le chargement de la page
-  window.onload = async () => {
-    const data = await fetchData();
-    if (data) loadGlobalChart(data);
-  };
-</script>
+  </script>
+</body>
+</html>
