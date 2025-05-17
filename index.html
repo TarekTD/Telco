@@ -8,14 +8,12 @@
     body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
     h1 { text-align: center; }
     .filters { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; justify-content: center; }
-    .offre { border: 1px solid #ccc; background: white; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
+    .offre { border: 1px solid #ccc; background: white; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; max-width: 800px; margin-left: auto; margin-right: auto; }
     .offre h2 { margin: 0 0 0.5rem 0; font-size: 1.2em; }
-    .offre table { width: 100%; border-collapse: collapse; }
+    .offre table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
     .offre td { padding: 4px 8px; vertical-align: top; }
     .offre tr:nth-child(odd) { background: #f2f2f2; }
     .offre .points { font-weight: bold; color: #007bff; }
-    .hidden { display: none; }
-    .checkboxes { display: flex; flex-direction: column; max-height: 200px; overflow-y: auto; }
     .slider-container { display: flex; flex-direction: column; align-items: center; margin: 1rem; }
     .slider-container label { margin-bottom: 0.3rem; }
     .intro {
@@ -44,12 +42,14 @@
       <option value="ADSL">ADSL</option>
       <option value="Fibre">Fibre</option>
     </select>
-    <div class="checkboxes" id="operateur-checkboxes">
+
+    <div id="operateur-checkboxes" class="checkboxes">
       <label><input type="checkbox" value="SFR" checked> SFR</label>
       <label><input type="checkbox" value="BYG" checked> Bouygues</label>
       <label><input type="checkbox" value="Orange" checked> Orange</label>
       <label><input type="checkbox" value="Free" checked> Free</label>
     </div>
+
     <input type="text" id="search-input" placeholder="Rechercher une offre..." />
   </div>
 
@@ -108,28 +108,15 @@
     const container = document.getElementById("offres-container");
     const typeFilter = document.getElementById("type-filter");
     const searchInput = document.getElementById("search-input");
-    const checkboxContainer = document.getElementById("checkbox-container");
     const operateurCheckboxes = document.getElementById("operateur-checkboxes");
     const prixSlider = document.getElementById("prix-slider");
     const prixVal = document.getElementById("prix-val");
     const pointsSlider = document.getElementById("points-slider");
     const pointsVal = document.getElementById("points-val");
 
-    offres.forEach(offre => {
-      const label = document.createElement("label");
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.value = offre.nom;
-      checkbox.checked = true;
-      label.appendChild(checkbox);
-      label.appendChild(document.createTextNode(" " + offre.nom));
-      checkboxContainer.appendChild(label);
-    });
-
     function displayOffres() {
-      const type = typeFilter.value.toLowerCase();
+      const type = typeFilter.value;
       const search = searchInput.value.toLowerCase();
-      const checkedOffers = Array.from(checkboxContainer.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
       const selectedOperateurs = Array.from(operateurCheckboxes.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
       const maxPrix = parseFloat(prixSlider.value);
       const minPoints = parseFloat(pointsSlider.value);
@@ -138,40 +125,37 @@
       pointsVal.textContent = minPoints;
 
       container.innerHTML = "";
-      const sortedOffres = offres.filter(offre => {
+
+      const filtered = offres.filter(offre => {
         return (
-          (!type || offre.type.toLowerCase().includes(type)) &&
+          (!type || offre.type === type) &&
           (!search || offre.nom.toLowerCase().includes(search)) &&
-          checkedOffers.includes(offre.nom) &&
           selectedOperateurs.includes(offre.operateur) &&
-          offre.prix <= maxPrix &&
+          offre.prixPromo <= maxPrix &&
           offre.points >= minPoints
         );
       }).sort((a, b) => b.points - a.points);
 
-      sortedOffres.forEach(offre => {
+      filtered.forEach(offre => {
         const div = document.createElement("div");
         div.className = "offre";
-        const lines = offre.description.split("\n");
-
-      div.innerHTML = `
-        <h2>${offre.nom} <span class="points">(${offre.points} pts)</span></h2>
-        <table>
-          <tr><td><strong>Type :</strong></td><td>${offre.type}</td></tr>
-          <tr><td><strong>Opérateur :</strong></td><td>${offre.operateur}</td></tr>
-          <tr><td><strong>Prix promo :</strong></td><td>${offre.prixPromo} €</td></tr>
-          <tr><td><strong>Prix après promo :</strong></td><td>${offre.prixApresPromo} €</td></tr>
-          <tr><td colspan="2"><strong>Détails :</strong><br>${offre.description.replace(/\n/g, "<br>")}</td></tr>
-        </table>
-      `;
+        div.innerHTML = `
+          <h2>${offre.nom} <span class="points">(${offre.points} pts)</span></h2>
+          <table>
+            <tr><td><strong>Type :</strong></td><td>${offre.type}</td></tr>
+            <tr><td><strong>Opérateur :</strong></td><td>${offre.operateur}</td></tr>
+            <tr><td><strong>Prix Promo :</strong></td><td>${offre.prixPromo} €</td></tr>
+            <tr><td><strong>Prix Après Promo :</strong></td><td>${offre.prixApresPromo} €</td></tr>
+            <tr><td><strong>Détails :</strong></td><td>${offre.description.replace(/\n/g, "<br>")}</td></tr>
+          </table>
+        `;
+        container.appendChild(div);
+      });
     }
 
-    typeFilter.addEventListener("change", displayOffres);
-    searchInput.addEventListener("input", displayOffres);
-    checkboxContainer.addEventListener("change", displayOffres);
-    operateurCheckboxes.addEventListener("change", displayOffres);
-    prixSlider.addEventListener("input", displayOffres);
-    pointsSlider.addEventListener("input", displayOffres);
+    // Listeners
+    [typeFilter, searchInput, prixSlider, pointsSlider].forEach(el => el.addEventListener("input", displayOffres));
+    operateurCheckboxes.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener("change", displayOffres));
 
     displayOffres();
   </script>
