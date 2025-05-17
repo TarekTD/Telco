@@ -25,6 +25,13 @@
       border: 1px solid #ddd;
       text-align: center;
     }
+    .sort-container {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
   </style>
 </head>
 <body>
@@ -66,8 +73,22 @@
     </div>
   </div>
 
+  <div class="sort-container">
+    <label for="sort-criteria">Trier par :</label>
+    <select id="sort-criteria">
+      <option value="points">Points</option>
+      <option value="prixPromo">Prix promo</option>
+    </select>
+
+    <label for="sort-order">Ordre :</label>
+    <select id="sort-order">
+      <option value="desc">Décroissant</option>
+      <option value="asc">Croissant</option>
+    </select>
+  </div>
+
   <div id="offres-container"></div>
-  
+
   <script>
         const offres = [
       { nom: "SFR PREMIUM", type: "Fibre", operateur: "SFR", points: 0.70, prixPromo: 44.99, prixApresPromo: 44.99,
@@ -111,15 +132,85 @@
       { nom: "Orange livebox ADSL", type: "ADSL", operateur: "Orange", points: 0.40, prixPromo: 22.99, prixApresPromo: 22.99,
         description: "Engagement : 12 mois\nVitesse : 20 Mb/s\nTV : 130 chaînes\nAppels : fixes\nFrais ouverture : 49€ offerts." },
     ];
-    const container = document.getElementById("offres-container");
-    const typeFilter = document.getElementById("type-filter");
-    const searchInput = document.getElementById("search-input");
-    const operateurCheckboxes = document.getElementById("operateur-checkboxes");
-    const prixSlider = document.getElementById("prix-slider");
-    const prixVal = document.getElementById("prix-val");
-    const pointsSlider = document.getElementById("points-slider");
-    const pointsVal = document.getElementById("points-val");
+const typeFilter = document.getElementById("type-filter");
+const operateurCheckboxes = document.getElementById("operateur-checkboxes");
+const searchInput = document.getElementById("search-input");
+const prixSlider = document.getElementById("prix-slider");
+const pointsSlider = document.getElementById("points-slider");
+const prixVal = document.getElementById("prix-val");
+const pointsVal = document.getElementById("points-val");
+const container = document.getElementById("offres-container");
+const sortCriteria = document.getElementById("sort-criteria");
+const sortOrder = document.getElementById("sort-order");
 
+function displayOffres() {
+  const type = typeFilter.value;
+  const search = searchInput.value.toLowerCase();
+  const selectedOperateurs = Array.from(operateurCheckboxes.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+  const maxPrix = parseFloat(prixSlider.value);
+  const minPoints = parseFloat(pointsSlider.value);
+  const critere = sortCriteria.value;
+  const ordre = sortOrder.value;
+
+  prixVal.textContent = maxPrix;
+  pointsVal.textContent = minPoints;
+
+  container.innerHTML = "";
+
+  // Filtrer les offres selon critères
+  let filtered = offres.filter(offre => {
+    const nomMin = offre.nom.toLowerCase();
+    return (
+      (type === "" || offre.type === type) &&
+      (search === "" || nomMin.includes(search)) &&
+      selectedOperateurs.includes(offre.operateur) &&
+      offre.prixPromo <= maxPrix &&
+      offre.points >= minPoints
+    );
+  });
+
+  // Trier selon critère et ordre
+  filtered.sort((a, b) => {
+    let valA = a[critere];
+    let valB = b[critere];
+    if (valA < valB) return ordre === "asc" ? -1 : 1;
+    if (valA > valB) return ordre === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  // Affichage
+  filtered.forEach(offre => {
+    const div = document.createElement("div");
+    div.className = "offre";
+    div.innerHTML = `
+      <h2>${offre.nom} <span class="points">(${offre.points} pts)</span></h2>
+      <table>
+        <tr><td><strong>Type :</strong></td><td>${offre.type}</td></tr>
+        <tr><td><strong>Opérateur :</strong></td><td>${offre.operateur}</td></tr>
+        <tr><td><strong>Prix Promo :</strong></td><td>${offre.prixPromo} €</td></tr>
+        <tr><td><strong>Prix Après Promo :</strong></td><td>${offre.prixApresPromo} €</td></tr>
+        <tr><td><strong>Détails :</strong></td><td>${offre.description.replace(/\n/g, "<br>")}</td></tr>
+      </table>
+    `;
+    container.appendChild(div);
+  });
+
+  if(filtered.length === 0) {
+    container.innerHTML = "<p style='text-align:center; color: #888;'>Aucune offre ne correspond à votre recherche.</p>";
+  }
+}
+
+// Événements
+[typeFilter, searchInput, prixSlider, pointsSlider, sortCriteria, sortOrder].forEach(el => {
+  el.addEventListener("input", displayOffres);
+});
+
+operateurCheckboxes.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+  cb.addEventListener("change", displayOffres);
+});
+
+displayOffres();
+    
     function displayOffres() {
       const type = typeFilter.value;
       const search = searchInput.value.toLowerCase();
@@ -162,7 +253,15 @@
     // Listeners
     [typeFilter, searchInput, prixSlider, pointsSlider].forEach(el => el.addEventListener("input", displayOffres));
     operateurCheckboxes.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener("change", displayOffres));
-
+let logoSrc = "";
+switch(offre.operateur) {
+  case "SFR": logoSrc = "logos/sfr.png"; break;
+  case "BYG": logoSrc = "logos/bouygues.png"; break;
+  case "Orange": logoSrc = "logos/orange.png"; break;
+  case "Free": logoSrc = "logos/free.png"; break;
+}
+// Puis dans le innerHTML
+<img src="${logoSrc}" alt="${offre.operateur}" style="height:24px; vertical-align:middle; margin-right:8px;">
     displayOffres();
   </script>
 </body>
