@@ -132,146 +132,99 @@
       { nom: "Orange livebox ADSL", type: "ADSL", operateur: "Orange", points: 0.40, prixPromo: 22.99, prixApresPromo: 22.99,
         description: "Engagement : 12 mois\nVitesse : 20 Mb/s\nTV : 130 chaînes\nAppels : fixes\nFrais ouverture : 49€ offerts." },
     ];
+const offresContainer = document.getElementById("offres-container");
 const typeFilter = document.getElementById("type-filter");
-const operateurCheckboxes = document.getElementById("operateur-checkboxes");
+const operateurCheckboxes = document.querySelectorAll("#operateur-checkboxes input[type=checkbox]");
 const searchInput = document.getElementById("search-input");
 const prixSlider = document.getElementById("prix-slider");
-const pointsSlider = document.getElementById("points-slider");
 const prixVal = document.getElementById("prix-val");
+const pointsSlider = document.getElementById("points-slider");
 const pointsVal = document.getElementById("points-val");
-const container = document.getElementById("offres-container");
 const sortCriteria = document.getElementById("sort-criteria");
 const sortOrder = document.getElementById("sort-order");
 
-function displayOffres() {
-  const type = typeFilter.value;
-  const search = searchInput.value.toLowerCase();
-  const selectedOperateurs = Array.from(operateurCheckboxes.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
-  const maxPrix = parseFloat(prixSlider.value);
-  const minPoints = parseFloat(pointsSlider.value);
-  const critere = sortCriteria.value;
-  const ordre = sortOrder.value;
+// Met à jour les valeurs affichées des sliders
+prixVal.textContent = prixSlider.value;
+pointsVal.textContent = pointsSlider.value;
 
-  prixVal.textContent = maxPrix;
-  pointsVal.textContent = minPoints;
+// Fonction pour échapper le texte (pour sécurité)
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
 
-  container.innerHTML = "";
+// Fonction pour afficher les offres filtrées et triées
+function afficherOffres() {
+  // Récupérer les valeurs des filtres
+  const typeSelectionne = typeFilter.value;
+  const operateursSelectionnes = Array.from(operateurCheckboxes)
+    .filter(cb => cb.checked)
+    .map(cb => cb.value);
+  const recherche = searchInput.value.trim().toLowerCase();
+  const prixMax = parseFloat(prixSlider.value);
+  const pointsMin = parseFloat(pointsSlider.value);
+  const critereTri = sortCriteria.value;
+  const ordreTri = sortOrder.value;
 
-  // Filtrer les offres selon critères
-  let filtered = offres.filter(offre => {
-    const nomMin = offre.nom.toLowerCase();
-    return (
-      (type === "" || offre.type === type) &&
-      (search === "" || nomMin.includes(search)) &&
-      selectedOperateurs.includes(offre.operateur) &&
-      offre.prixPromo <= maxPrix &&
-      offre.points >= minPoints
-    );
+  // Filtrer les offres selon les critères
+  let offresFiltres = offres.filter(offre => {
+    const matchesType = typeSelectionne === "" || offre.type === typeSelectionne;
+    const matchesOperateur = operateursSelectionnes.includes(offre.operateur);
+    const matchesRecherche = offre.nom.toLowerCase().includes(recherche);
+    const matchesPrix = offre.prixPromo <= prixMax;
+    const matchesPoints = offre.points >= pointsMin;
+    return matchesType && matchesOperateur && matchesRecherche && matchesPrix && matchesPoints;
   });
 
-  // Trier selon critère et ordre
-  filtered.sort((a, b) => {
-    let valA = a[critere];
-    let valB = b[critere];
-    if (valA < valB) return ordre === "asc" ? -1 : 1;
-    if (valA > valB) return ordre === "asc" ? 1 : -1;
+  // Trier les offres
+  offresFiltres.sort((a, b) => {
+    let valA = a[critereTri];
+    let valB = b[critereTri];
+    if (valA < valB) return ordreTri === "asc" ? -1 : 1;
+    if (valA > valB) return ordreTri === "asc" ? 1 : -1;
     return 0;
   });
 
-  // Affichage
-filtered.forEach(offre => {
-  const div = document.createElement("div");
-  div.className = "offre";
-
-  // Mettre la description avec saut de ligne
-  const descriptionFormatted = offre.description
-    .split('\n')
-    .map(line => `<div>${line}</div>`)
-    .join('');
-
-  div.innerHTML = `
-    <h2>${offre.nom} <span class="points">(${offre.points} pts)</span></h2>
-    <table>
-      <tr><td><strong>Type :</strong></td><td>${offre.type}</td></tr>
-      <tr><td><strong>Opérateur :</strong></td><td>${offre.operateur}</td></tr>
-      <tr><td><strong>Prix Promo :</strong></td><td>${offre.prixPromo} €</td></tr>
-      <tr><td><strong>Prix Après Promo :</strong></td><td>${offre.prixApresPromo} €</td></tr>
-    </table>
-    <div style="margin-top: 0.5rem; font-size: 0.9em; color: #555;">
-      ${descriptionFormatted}
-    </div>
-  `;
-  container.appendChild(div);
-});
-
-  if(filtered.length === 0) {
-    container.innerHTML = "<p style='text-align:center; color: #888;'>Aucune offre ne correspond à votre recherche.</p>";
+  // Construire le HTML des offres filtrées
+  if (offresFiltres.length === 0) {
+    offresContainer.innerHTML = "<p>Aucune offre ne correspond à vos critères.</p>";
+    return;
   }
+
+  offresContainer.innerHTML = offresFiltres.map(offre => `
+    <div class="offre">
+      <h2>${escapeHtml(offre.nom)} <span class="points">${offre.points} pts</span></h2>
+      <table>
+        <tr><td><strong>Type</strong></td><td>${escapeHtml(offre.type)}</td></tr>
+        <tr><td><strong>Opérateur</strong></td><td>${escapeHtml(offre.operateur)}</td></tr>
+        <tr><td><strong>Prix promo</strong></td><td>${offre.prixPromo} €</td></tr>
+        <tr><td><strong>Prix après promo</strong></td><td>${offre.prixApresPromo} €</td></tr>
+        <tr><td colspan="2"><strong>Description :</strong><br>${escapeHtml(offre.description).replace(/\n/g, '<br>')}</td></tr>
+      </table>
+    </div>
+  `).join('');
 }
 
-// Événements
-[typeFilter, searchInput, prixSlider, pointsSlider, sortCriteria, sortOrder].forEach(el => {
-  el.addEventListener("input", displayOffres);
+// Écouteurs d'événements pour rafraîchir l'affichage au changement des filtres
+typeFilter.addEventListener('change', afficherOffres);
+operateurCheckboxes.forEach(cb => cb.addEventListener('change', afficherOffres));
+searchInput.addEventListener('input', afficherOffres);
+
+prixSlider.addEventListener('input', () => {
+  prixVal.textContent = prixSlider.value;
+  afficherOffres();
+});
+pointsSlider.addEventListener('input', () => {
+  pointsVal.textContent = pointsSlider.value;
+  afficherOffres();
 });
 
-operateurCheckboxes.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-  cb.addEventListener("change", displayOffres);
-});
+sortCriteria.addEventListener('change', afficherOffres);
+sortOrder.addEventListener('change', afficherOffres);
 
-displayOffres();
-    
-    function displayOffres() {
-      const type = typeFilter.value;
-      const search = searchInput.value.toLowerCase();
-      const selectedOperateurs = Array.from(operateurCheckboxes.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
-      const maxPrix = parseFloat(prixSlider.value);
-      const minPoints = parseFloat(pointsSlider.value);
-
-      prixVal.textContent = maxPrix;
-      pointsVal.textContent = minPoints;
-
-      container.innerHTML = "";
-
-      const filtered = offres.filter(offre => {
-        return (
-          (!type || offre.type === type) &&
-          (!search || offre.nom.toLowerCase().includes(search)) &&
-          selectedOperateurs.includes(offre.operateur) &&
-          offre.prixPromo <= maxPrix &&
-          offre.points >= minPoints
-        );
-      }).sort((a, b) => b.points - a.points);
-
-      filtered.forEach(offre => {
-        const div = document.createElement("div");
-        div.className = "offre";
-        div.innerHTML = `
-          <h2>${offre.nom} <span class="points">(${offre.points} pts)</span></h2>
-          <table>
-            <tr><td><strong>Type :</strong></td><td>${offre.type}</td></tr>
-            <tr><td><strong>Opérateur :</strong></td><td>${offre.operateur}</td></tr>
-            <tr><td><strong>Prix Promo :</strong></td><td>${offre.prixPromo} €</td></tr>
-            <tr><td><strong>Prix Après Promo :</strong></td><td>${offre.prixApresPromo} €</td></tr>
-            <tr><td><strong>Détails :</strong></td><td>${offre.description.replace(/\n/g, "<br>")}</td></tr>
-          </table>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    // Listeners
-    [typeFilter, searchInput, prixSlider, pointsSlider].forEach(el => el.addEventListener("input", displayOffres));
-    operateurCheckboxes.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener("change", displayOffres));
-let logoSrc = "";
-switch(offre.operateur) {
-  case "SFR": logoSrc = "logos/sfr.png"; break;
-  case "BYG": logoSrc = "logos/bouygues.png"; break;
-  case "Orange": logoSrc = "logos/orange.png"; break;
-  case "Free": logoSrc = "logos/free.png"; break;
-}
-// Puis dans le innerHTML
-<img src="${logoSrc}" alt="${offre.operateur}" style="height:24px; vertical-align:middle; margin-right:8px;">
-    displayOffres();
+// Affichage initial
+afficherOffres();
   </script>
 </body>
 </html>
