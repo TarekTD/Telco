@@ -153,14 +153,17 @@
         const div = document.createElement("div");
         div.className = "offre";
         const lines = offre.description.split("\n");
-        div.innerHTML = `<h2>${offre.nom}</h2>
+
+      div.innerHTML = `
+        <h2>${offre.nom} <span class="points">(${offre.points} pts)</span></h2>
         <table>
-          <tr><td><strong>Points</strong></td><td>${offre.points}</td><td><strong>Prix</strong></td><td>${offre.prix} €</td><td>${lines[0]}</td></tr>
-          <tr><td>${lines[1]}</td><td>${lines[2]}</td><td>${lines[3]}</td></tr>
-          <tr><td>${lines[4]}</td><td>${lines[5]}</td><td>${lines[6]}</td></tr>
-        </table>`;
-        container.appendChild(div);
-      });
+          <tr><td><strong>Type :</strong></td><td>${offre.type}</td></tr>
+          <tr><td><strong>Opérateur :</strong></td><td>${offre.operateur}</td></tr>
+          <tr><td><strong>Prix promo :</strong></td><td>${offre.prixPromo} €</td></tr>
+          <tr><td><strong>Prix après promo :</strong></td><td>${offre.prixApresPromo} €</td></tr>
+          <tr><td colspan="2"><strong>Détails :</strong><br>${offre.description.replace(/\n/g, "<br>")}</td></tr>
+        </table>
+      `;
     }
 
     typeFilter.addEventListener("change", displayOffres);
