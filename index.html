@@ -60,6 +60,9 @@
     <input type="text" id="search-input" placeholder="Rechercher une offre..." />
   </div>
 
+ <button onclick="window.open('https://indiana3.proxad.net/', '_blank')" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Free</button>
+ <button onclick="window.open('https://www.bemove.fr/landing/energie/buy-u-energie-td/boutique', '_blank')" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">BeMove</button> 
+
   <div class="filters">
     <div class="slider-container">
       <label for="prix-slider">Prix maximum (€)</label>
@@ -88,8 +91,6 @@
   </div>
 
   <div id="offres-container"></div>
- <button onclick="window.open('https://indiana3.proxad.net/', '_blank')" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Free</button>
- <button onclick="window.open('https://www.bemove.fr/landing/energie/buy-u-energie-td/boutique', '_blank')" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">BeMove</button> 
   <script>
         const offres = [
       { nom: "SFR PREMIUM", type: "Fibre", operateur: "SFR", points: 0.70, prixPromo: 44.99, prixApresPromo: 44.99,
